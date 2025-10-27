@@ -25,7 +25,7 @@ jobs:
           echo "Workflow run triggered at: $DATE_TIME UTC" >> daily_log.txt
 
       # Set the commit author email as required by the task
-      - name: 📧 Configure Git User Email: 24f2006569@ds.study.iitm.ac.in
+      - name: '24f2006569@ds.study.iitm.ac.in'
         run: |
           git config user.name "Automated Daily Committer"
           git config user.email "24f2006569@ds.study.iitm.ac.in"
