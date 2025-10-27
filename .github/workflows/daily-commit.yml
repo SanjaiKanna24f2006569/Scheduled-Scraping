@@ -1,52 +1,15 @@
-name: Daily Automated Commit
-
+name: Master
 on:
-  # Added workflow_dispatch to allow manual triggering for immediate testing
-  workflow_dispatch:
-  
-  # The 'push' trigger is kept for easy editing/testing
   push:
     branches:
       - master
-
-  # The 'schedule' event is updated to run DAILY at 8:00 AM UTC
   schedule:
-    # Format: minute (0-59) hour (0-23) day_of_month (*) month (*) day_of_week (*)
-    - cron: '0 8 * * *'
-
+    - cron: '*/5 * * * *'
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: ⬇️ Checkout Repository
-        # Updated to v4 for better support, and fetch-depth 0 is critical for committing back
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      # Set the commit author email as required by the task
-      - name: 📧 Configure Git User Email: 24f2006569@ds.study.iitm.ac.in
-        run: |
-          git config user.name "Automated Daily Committer"
-          git config user.email "24f2006569@ds.study.iitm.ac.in"
-
-      # Create/Update a file to ensure there's always a change to commit
-      - name: ✍️ Update a log file with run time
-        run: |
-          DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S %Z')
-          echo "Workflow run completed at: $DATE_TIME" >> daily_commit_log.txt
-          git add daily_commit_log.txt
-          echo "Updated daily_commit_log.txt and staged for commit."
-
-      - name: ➕ Commit and Push Changes
-        run: |
-          # Use 'git diff --cached' to check if anything was added to the staging area
-          if ! git diff --cached --exit-code; then
-            # Create the commit
-            git commit -m "🤖 Daily Automated Commit: $(date '+%Y-%m-%d')"
-            
-            # Push the commit
-            git push
-          else
-            echo "No file changes detected. Skipping commit."
-          fi
+    - uses: actions/checkout@v1
+    - name: Running
+      run: |
+        echo "Running!"
