@@ -1,10 +1,10 @@
 name: Daily Automated Commit
 
 on:
-  # Runs daily at 05:30 UTC
+  # Runs daily at 05:30 UTC (30 minutes past 5 AM UTC)
   schedule:
     - cron: '30 05 * * *'
-  # Allows manual triggering
+  # Allows manual triggering from the Actions tab
   workflow_dispatch:
 
 jobs:
@@ -13,16 +13,18 @@ jobs:
     steps:
       - name: ⬇️ Checkout Repository
         uses: actions/checkout@v4
+        # We need to fetch history so the workflow can successfully push a new commit.
+        with:
+          fetch-depth: 0
 
-      # Set a unique filename and content using the current date and time
-      - name: ✍️ Create/Update a file with the run time
-        id: create_file
+      # Create/Update a file with the current date/time to ensure there's always a change
+      - name: ✍️ Create/Update files with run time
         run: |
           DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
           echo "Last run: $DATE_TIME" > daily_run_status.txt
           echo "Workflow run triggered at: $DATE_TIME UTC" >> daily_log.txt
 
-      # Set the commit author email as required
+      # Set the commit author email as required by the task
       - name: 📧 Configure Git User Email: 24f2006569@ds.study.iitm.ac.in
         run: |
           git config user.name "Automated Daily Committer"
@@ -30,13 +32,16 @@ jobs:
 
       - name: ➕ Commit and Push Changes
         run: |
+          # Add the newly created/updated files
           git add daily_run_status.txt daily_log.txt
-          # Check if there are changes to commit (this line should be on the same level as the git add command)
-          # The previous error likely occurred because of incorrect indentation or a misplaced variable here.
+          
+          # Check if there are changes to commit before attempting the commit command
           if git status --porcelain | grep .; then
+            # Commit the changes
             git commit -m "🤖 Daily Automated Commit: $(date '+%Y-%m-%d')"
-            # Use GITHUB_TOKEN for authentication
+            
+            # Push the commit using the GITHUB_TOKEN for authentication
             git push
           else
-            echo "No changes to commit. Skipping commit step."
+            echo "No changes detected. Skipping commit."
           fi
