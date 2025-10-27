@@ -1,0 +1,42 @@
+name: Daily Automated Commit
+
+on:
+  # The 'schedule' event uses cron syntax (minute hour day_of_month month day_of_week)
+  # This example is set to run daily at 05:30 UTC. You can adjust the '30 5' to
+  # any specific minute and hour, but wildcards are not used for daily execution.
+  schedule:
+    - cron: '30 05 * * *'
+  # The 'workflow_dispatch' event allows you to manually trigger the workflow
+  # from the 'Actions' tab, which is necessary to "Trigger the workflow" as requested.
+  workflow_dispatch:
+
+jobs:
+  daily_update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout Repository
+        uses: actions/checkout@v4
+
+      # Set a unique filename and content using the current date and time
+      - name: ✍️ Create/Update a file with the run time
+        run: |
+          DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+          echo "Last run: $DATE_TIME" > daily_run_status.txt
+          echo "Workflow run triggered at: $DATE_TIME UTC" >> daily_log.txt
+
+      # Set the commit author email as required
+      - name: 📧 Configure Git User Email: 24f2006569@ds.study.iitm.ac.in
+        run: |
+          git config user.name "Automated Daily Committer"
+          git config user.email "24f2006569@ds.study.iitm.ac.in"
+
+      - name: ➕ Commit and Push Changes
+        run: |
+          git add daily_run_status.txt daily_log.txt
+          # Check if there are changes to commit
+          if git status --porcelain | grep .; then
+            git commit -m "🤖 Daily Automated Commit: $(date '+%Y-%m-%d')"
+            git push
+          else
+            echo "No changes to commit. Skipping commit step."
+          fi
