@@ -1,10 +1,11 @@
 name: Daily Automated Commit
 
 on:
-  # Runs daily at 05:30 UTC (30 minutes past 5 AM UTC)
+  # The 'schedule' event runs daily at 05:30 UTC
   schedule:
+    # Must use specific hours/minutes (not wildcards)
     - cron: '30 05 * * *'
-  # Allows manual triggering from the Actions tab
+  # The 'workflow_dispatch' event allows you to manually trigger the workflow
   workflow_dispatch:
 
 jobs:
@@ -12,36 +13,39 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: ⬇️ Checkout Repository
+        # Fetch-depth 0 ensures we get the full history required to commit back
         uses: actions/checkout@v4
-        # We need to fetch history so the workflow can successfully push a new commit.
         with:
           fetch-depth: 0
 
-      # Create/Update a file with the current date/time to ensure there's always a change
-      - name: ✍️ Create/Update files with run time
-        run: |
-          DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-          echo "Last run: $DATE_TIME" > daily_run_status.txt
-          echo "Workflow run triggered at: $DATE_TIME UTC" >> daily_log.txt
-
       # Set the commit author email as required by the task
-      - name: '24f2006569@ds.study.iitm.ac.in'
+      - name: 📧 Configure Git User Email: 24f2006569@ds.study.iitm.ac.in
         run: |
           git config user.name "Automated Daily Committer"
+          # Set the required email address
           git config user.email "24f2006569@ds.study.iitm.ac.in"
+
+      # Create/Update a file with the current date/time
+      - name: ✍️ Create/Update log file to ensure a change is made
+        id: file_changes
+        run: |
+          DATE_TIME=$(date '+%Y-%m-%d %H:%M:%S %Z')
+          # Append a new line to a log file
+          echo "Run completed at: $DATE_TIME" >> daily_commit_log.txt
+          
+          # Print status and add the file to staging area
+          git status
+          git add daily_commit_log.txt
 
       - name: ➕ Commit and Push Changes
         run: |
-          # Add the newly created/updated files
-          git add daily_run_status.txt daily_log.txt
-          
-          # Check if there are changes to commit before attempting the commit command
-          if git status --porcelain | grep .; then
+          # Use 'git diff --cached' to check if anything was added to the staging area
+          if ! git diff --cached --exit-code; then
             # Commit the changes
             git commit -m "🤖 Daily Automated Commit: $(date '+%Y-%m-%d')"
             
-            # Push the commit using the GITHUB_TOKEN for authentication
+            # Push the commit using the GITHUB_TOKEN
             git push
           else
-            echo "No changes detected. Skipping commit."
+            echo "No file changes detected after 'git add'. Skipping commit step."
           fi
